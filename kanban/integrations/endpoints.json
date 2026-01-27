@@ -1,0 +1,239 @@
+{
+  "$schema": "./endpoints.schema.json",
+  "version": "1.0.0",
+  "description": "BlackRoad Docker Manager - All Integration Endpoints",
+  "lastUpdated": "2026-01-27T00:00:00Z",
+
+  "endpoints": {
+    "cloudflare": {
+      "name": "Cloudflare",
+      "description": "State management and edge computing",
+      "type": "state_manager",
+      "baseUrl": "${CLOUDFLARE_API_URL}",
+      "authType": "bearer",
+      "authEnvVar": "CLOUDFLARE_API_TOKEN",
+      "accountIdEnvVar": "CLOUDFLARE_ACCOUNT_ID",
+      "endpoints": {
+        "kv": "/client/v4/accounts/${accountId}/storage/kv/namespaces",
+        "workers": "/client/v4/accounts/${accountId}/workers/scripts",
+        "pages": "/client/v4/accounts/${accountId}/pages/projects",
+        "r2": "/client/v4/accounts/${accountId}/r2/buckets"
+      },
+      "healthCheck": "/client/v4/user/tokens/verify",
+      "retryPolicy": {
+        "maxRetries": 4,
+        "backoffMs": [2000, 4000, 8000, 16000]
+      }
+    },
+
+    "salesforce": {
+      "name": "Salesforce",
+      "description": "CRM and customer relationship management",
+      "type": "crm",
+      "baseUrl": "${SALESFORCE_INSTANCE_URL}",
+      "authType": "oauth2",
+      "authEnvVars": {
+        "clientId": "SALESFORCE_CLIENT_ID",
+        "clientSecret": "SALESFORCE_CLIENT_SECRET",
+        "refreshToken": "SALESFORCE_REFRESH_TOKEN"
+      },
+      "endpoints": {
+        "query": "/services/data/v58.0/query",
+        "sobjects": "/services/data/v58.0/sobjects",
+        "composite": "/services/data/v58.0/composite",
+        "chatter": "/services/data/v58.0/chatter"
+      },
+      "healthCheck": "/services/data/v58.0/limits",
+      "retryPolicy": {
+        "maxRetries": 4,
+        "backoffMs": [2000, 4000, 8000, 16000]
+      }
+    },
+
+    "vercel": {
+      "name": "Vercel",
+      "description": "Deployment and preview environments",
+      "type": "deployment",
+      "baseUrl": "https://api.vercel.com",
+      "authType": "bearer",
+      "authEnvVar": "VERCEL_TOKEN",
+      "teamIdEnvVar": "VERCEL_TEAM_ID",
+      "endpoints": {
+        "deployments": "/v13/deployments",
+        "projects": "/v9/projects",
+        "domains": "/v5/domains",
+        "secrets": "/v3/secrets"
+      },
+      "healthCheck": "/v2/user",
+      "retryPolicy": {
+        "maxRetries": 4,
+        "backoffMs": [2000, 4000, 8000, 16000]
+      }
+    },
+
+    "digitalocean": {
+      "name": "DigitalOcean",
+      "description": "Cloud infrastructure and droplets",
+      "type": "infrastructure",
+      "baseUrl": "https://api.digitalocean.com/v2",
+      "authType": "bearer",
+      "authEnvVar": "DIGITALOCEAN_TOKEN",
+      "endpoints": {
+        "droplets": "/droplets",
+        "kubernetes": "/kubernetes/clusters",
+        "databases": "/databases",
+        "apps": "/apps",
+        "functions": "/functions/namespaces"
+      },
+      "healthCheck": "/account",
+      "retryPolicy": {
+        "maxRetries": 4,
+        "backoffMs": [2000, 4000, 8000, 16000]
+      }
+    },
+
+    "claude": {
+      "name": "Claude API",
+      "description": "AI agent and code assistance",
+      "type": "ai",
+      "baseUrl": "https://api.anthropic.com",
+      "authType": "x-api-key",
+      "authEnvVar": "ANTHROPIC_API_KEY",
+      "endpoints": {
+        "messages": "/v1/messages",
+        "complete": "/v1/complete"
+      },
+      "headers": {
+        "anthropic-version": "2024-01-01"
+      },
+      "healthCheck": "/v1/messages",
+      "retryPolicy": {
+        "maxRetries": 4,
+        "backoffMs": [2000, 4000, 8000, 16000]
+      }
+    },
+
+    "github": {
+      "name": "GitHub",
+      "description": "Source control and project management",
+      "type": "vcs",
+      "baseUrl": "https://api.github.com",
+      "authType": "bearer",
+      "authEnvVar": "GITHUB_TOKEN",
+      "endpoints": {
+        "repos": "/repos",
+        "issues": "/repos/${owner}/${repo}/issues",
+        "pulls": "/repos/${owner}/${repo}/pulls",
+        "projects": "/repos/${owner}/${repo}/projects",
+        "actions": "/repos/${owner}/${repo}/actions"
+      },
+      "healthCheck": "/user",
+      "retryPolicy": {
+        "maxRetries": 4,
+        "backoffMs": [2000, 4000, 8000, 16000]
+      }
+    },
+
+    "raspberry_pi": {
+      "name": "Raspberry Pi Fleet",
+      "description": "Edge device management",
+      "type": "edge",
+      "baseUrl": "${RPI_MANAGER_URL}",
+      "authType": "api_key",
+      "authEnvVar": "RPI_API_KEY",
+      "endpoints": {
+        "devices": "/api/v1/devices",
+        "deploy": "/api/v1/deploy",
+        "status": "/api/v1/status",
+        "logs": "/api/v1/logs"
+      },
+      "healthCheck": "/api/v1/health",
+      "retryPolicy": {
+        "maxRetries": 4,
+        "backoffMs": [2000, 4000, 8000, 16000]
+      },
+      "sshConfig": {
+        "defaultUser": "pi",
+        "keyEnvVar": "RPI_SSH_KEY_PATH"
+      }
+    }
+  },
+
+  "mobileApps": {
+    "termius": {
+      "name": "Termius",
+      "description": "SSH client for iOS/Android",
+      "type": "ssh_client",
+      "syncEnabled": true,
+      "configPath": "~/.termius/config.json",
+      "exportFormat": "json"
+    },
+
+    "ish": {
+      "name": "iSH",
+      "description": "Linux shell for iOS",
+      "type": "shell",
+      "alpineLinux": true,
+      "sharedFolder": "/iCloud/iSH",
+      "packages": ["git", "python3", "openssh", "curl"]
+    },
+
+    "shellfish": {
+      "name": "Shellfish",
+      "description": "SFTP/SSH for iOS",
+      "type": "ssh_client",
+      "features": ["sftp", "ssh", "terminal", "files"],
+      "configSync": "iCloud"
+    },
+
+    "workingCopy": {
+      "name": "Working Copy",
+      "description": "Git client for iOS",
+      "type": "git_client",
+      "features": ["clone", "push", "pull", "diff", "merge"],
+      "urlScheme": "working-copy://",
+      "configPath": "~/Documents/WorkingCopy"
+    },
+
+    "pyto": {
+      "name": "Pyto",
+      "description": "Python IDE for iOS",
+      "type": "ide",
+      "pythonVersion": "3.11",
+      "features": ["scripts", "shortcuts", "widgets"],
+      "sharedFolder": "/iCloud/Pyto"
+    }
+  },
+
+  "webhooks": {
+    "github_to_cloudflare": {
+      "source": "github",
+      "target": "cloudflare",
+      "events": ["push", "pull_request", "issues"],
+      "endpoint": "${CLOUDFLARE_WORKER_URL}/webhooks/github"
+    },
+
+    "salesforce_to_github": {
+      "source": "salesforce",
+      "target": "github",
+      "events": ["opportunity_closed", "case_created"],
+      "endpoint": "${GITHUB_WEBHOOK_URL}/salesforce"
+    },
+
+    "vercel_to_cloudflare": {
+      "source": "vercel",
+      "target": "cloudflare",
+      "events": ["deployment_ready", "deployment_error"],
+      "endpoint": "${CLOUDFLARE_WORKER_URL}/webhooks/vercel"
+    }
+  },
+
+  "rateLimits": {
+    "cloudflare": { "requestsPerMinute": 1200 },
+    "salesforce": { "requestsPerDay": 100000 },
+    "vercel": { "requestsPerMinute": 100 },
+    "digitalocean": { "requestsPerHour": 5000 },
+    "claude": { "tokensPerMinute": 100000 },
+    "github": { "requestsPerHour": 5000 }
+  }
+}

@@ -1,0 +1,219 @@
+{
+  "$schema": "https://termius.com/schema/config.json",
+  "version": "1.0",
+  "description": "BlackRoad Docker Manager - Termius Configuration",
+
+  "groups": [
+    {
+      "name": "BlackRoad Infrastructure",
+      "color": "#FF6B35"
+    },
+    {
+      "name": "Raspberry Pi Fleet",
+      "color": "#4ECDC4"
+    },
+    {
+      "name": "Cloud Servers",
+      "color": "#2196F3"
+    }
+  ],
+
+  "hosts": [
+    {
+      "label": "Development Server",
+      "group": "BlackRoad Infrastructure",
+      "address": "${DEV_SERVER_HOST}",
+      "port": 22,
+      "username": "${DEV_USER}",
+      "authType": "publicKey",
+      "keyLabel": "blackroad-dev-key",
+      "tags": ["development", "primary"],
+      "snippets": [
+        {
+          "name": "Check Docker",
+          "command": "docker ps && docker-compose ps"
+        },
+        {
+          "name": "View Logs",
+          "command": "docker-compose logs -f --tail=100"
+        },
+        {
+          "name": "Restart Services",
+          "command": "docker-compose restart"
+        }
+      ]
+    },
+    {
+      "label": "Staging Server",
+      "group": "BlackRoad Infrastructure",
+      "address": "${STAGING_SERVER_HOST}",
+      "port": 22,
+      "username": "${STAGING_USER}",
+      "authType": "publicKey",
+      "keyLabel": "blackroad-staging-key",
+      "tags": ["staging"]
+    },
+    {
+      "label": "Production Server",
+      "group": "BlackRoad Infrastructure",
+      "address": "${PROD_SERVER_HOST}",
+      "port": 22,
+      "username": "${PROD_USER}",
+      "authType": "publicKey",
+      "keyLabel": "blackroad-prod-key",
+      "tags": ["production"],
+      "warning": "Production environment - proceed with caution"
+    },
+    {
+      "label": "Pi - Edge Node 1",
+      "group": "Raspberry Pi Fleet",
+      "address": "${RPI_NODE1_IP}",
+      "port": 22,
+      "username": "pi",
+      "authType": "publicKey",
+      "keyLabel": "rpi-fleet-key",
+      "tags": ["edge", "raspberry-pi"],
+      "snippets": [
+        {
+          "name": "System Info",
+          "command": "hostname && uname -a && cat /etc/os-release | head -3"
+        },
+        {
+          "name": "Temperature",
+          "command": "vcgencmd measure_temp"
+        },
+        {
+          "name": "Docker Status",
+          "command": "docker ps"
+        }
+      ]
+    },
+    {
+      "label": "Pi - Edge Node 2",
+      "group": "Raspberry Pi Fleet",
+      "address": "${RPI_NODE2_IP}",
+      "port": 22,
+      "username": "pi",
+      "authType": "publicKey",
+      "keyLabel": "rpi-fleet-key",
+      "tags": ["edge", "raspberry-pi"]
+    },
+    {
+      "label": "Pi - Edge Node 3",
+      "group": "Raspberry Pi Fleet",
+      "address": "${RPI_NODE3_IP}",
+      "port": 22,
+      "username": "pi",
+      "authType": "publicKey",
+      "keyLabel": "rpi-fleet-key",
+      "tags": ["edge", "raspberry-pi"]
+    },
+    {
+      "label": "DigitalOcean Droplet",
+      "group": "Cloud Servers",
+      "address": "${DO_DROPLET_IP}",
+      "port": 22,
+      "username": "root",
+      "authType": "publicKey",
+      "keyLabel": "do-key",
+      "tags": ["cloud", "digitalocean"]
+    }
+  ],
+
+  "keys": [
+    {
+      "label": "blackroad-dev-key",
+      "type": "ed25519",
+      "encrypted": true,
+      "comment": "Development server access"
+    },
+    {
+      "label": "blackroad-staging-key",
+      "type": "ed25519",
+      "encrypted": true,
+      "comment": "Staging server access"
+    },
+    {
+      "label": "blackroad-prod-key",
+      "type": "ed25519",
+      "encrypted": true,
+      "comment": "Production server access - RESTRICTED"
+    },
+    {
+      "label": "rpi-fleet-key",
+      "type": "ed25519",
+      "encrypted": true,
+      "comment": "Raspberry Pi fleet access"
+    },
+    {
+      "label": "do-key",
+      "type": "ed25519",
+      "encrypted": true,
+      "comment": "DigitalOcean access"
+    }
+  ],
+
+  "snippets": [
+    {
+      "name": "Git Pull",
+      "command": "cd ~/blackroad-docker-manager && git pull origin main",
+      "tags": ["git"]
+    },
+    {
+      "name": "Git Status",
+      "command": "cd ~/blackroad-docker-manager && git status",
+      "tags": ["git"]
+    },
+    {
+      "name": "Docker Cleanup",
+      "command": "docker system prune -af --volumes",
+      "tags": ["docker", "maintenance"]
+    },
+    {
+      "name": "Check Disk Space",
+      "command": "df -h",
+      "tags": ["system"]
+    },
+    {
+      "name": "Check Memory",
+      "command": "free -h",
+      "tags": ["system"]
+    },
+    {
+      "name": "Run Hash Verification",
+      "command": "cd ~/blackroad-docker-manager && python3 kanban/hashing/sha256.py hash-dir .",
+      "tags": ["security", "verification"]
+    },
+    {
+      "name": "Deploy to Production",
+      "command": "cd ~/blackroad-docker-manager && ./scripts/deploy.sh production",
+      "tags": ["deployment"],
+      "confirm": true
+    }
+  ],
+
+  "portForwarding": [
+    {
+      "name": "Dev Server Web",
+      "localPort": 8080,
+      "remoteHost": "localhost",
+      "remotePort": 80,
+      "host": "Development Server"
+    },
+    {
+      "name": "Dev Server API",
+      "localPort": 3000,
+      "remoteHost": "localhost",
+      "remotePort": 3000,
+      "host": "Development Server"
+    }
+  ],
+
+  "settings": {
+    "theme": "dark",
+    "fontSize": 14,
+    "fontFamily": "SF Mono",
+    "keepAliveInterval": 60,
+    "terminalType": "xterm-256color"
+  }
+}
