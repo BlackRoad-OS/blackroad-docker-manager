@@ -1,0 +1,93 @@
+{
+  "version": "1.0.0",
+  "lastUpdated": "2026-01-27T00:00:00Z",
+  "columns": {
+    "backlog": [
+      {
+        "id": "TASK-008",
+        "title": "Performance Optimization",
+        "priority": "low"
+      }
+    ],
+    "triage": [],
+    "ready": [
+      {
+        "id": "TASK-001",
+        "title": "Complete Integration Testing",
+        "priority": "high"
+      },
+      {
+        "id": "TASK-002",
+        "title": "Configure Cloudflare Workers",
+        "priority": "high"
+      },
+      {
+        "id": "TASK-003",
+        "title": "Set Up Salesforce Connection",
+        "priority": "high"
+      },
+      {
+        "id": "TASK-004",
+        "title": "Mobile App Configuration",
+        "priority": "medium"
+      },
+      {
+        "id": "TASK-005",
+        "title": "Raspberry Pi Fleet Setup",
+        "priority": "medium"
+      },
+      {
+        "id": "TASK-006",
+        "title": "GitHub Projects Board Setup",
+        "priority": "medium"
+      },
+      {
+        "id": "TASK-007",
+        "title": "Documentation Review",
+        "priority": "low"
+      }
+    ],
+    "inProgress": [],
+    "review": [],
+    "testing": [],
+    "blocked": [],
+    "done": []
+  },
+  "agents": [],
+  "integrations": {
+    "cloudflare": {
+      "status": "configured",
+      "lastSync": null
+    },
+    "salesforce": {
+      "status": "configured",
+      "lastSync": null
+    },
+    "vercel": {
+      "status": "configured",
+      "lastSync": null
+    },
+    "digitalocean": {
+      "status": "configured",
+      "lastSync": null
+    },
+    "claude": {
+      "status": "configured",
+      "lastSync": null
+    },
+    "github": {
+      "status": "active",
+      "lastSync": "2026-01-27T00:00:00Z"
+    },
+    "raspberry_pi": {
+      "status": "configured",
+      "lastSync": null
+    }
+  },
+  "metrics": {
+    "tasksCompleted": 0,
+    "prsOpened": 0,
+    "prsMerged": 0,
+    "prsFailed": 0
+  }
+}

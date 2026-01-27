@@ -1,0 +1,141 @@
+name: Kanban Sync
+
+on:
+  issues:
+    types: [opened, closed, reopened, labeled, unlabeled]
+  pull_request:
+    types: [opened, closed, ready_for_review, converted_to_draft]
+  workflow_dispatch:
+    inputs:
+      sync_all:
+        description: 'Sync all integrations'
+        required: false
+        default: 'false'
+
+env:
+  CLOUDFLARE_API_URL: ${{ secrets.CLOUDFLARE_API_URL }}
+  CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+
+jobs:
+  # Sync GitHub events to Cloudflare
+  sync-to-cloudflare:
+    name: Sync to Cloudflare
+    runs-on: ubuntu-latest
+    if: github.event_name != 'workflow_dispatch' || github.event.inputs.sync_all == 'true'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Determine event type
+        id: event
+        run: |
+          if [ "${{ github.event_name }}" == "issues" ]; then
+            echo "type=issue" >> $GITHUB_OUTPUT
+            echo "action=${{ github.event.action }}" >> $GITHUB_OUTPUT
+            echo "id=${{ github.event.issue.number }}" >> $GITHUB_OUTPUT
+            echo "title=${{ github.event.issue.title }}" >> $GITHUB_OUTPUT
+          elif [ "${{ github.event_name }}" == "pull_request" ]; then
+            echo "type=pull_request" >> $GITHUB_OUTPUT
+            echo "action=${{ github.event.action }}" >> $GITHUB_OUTPUT
+            echo "id=${{ github.event.pull_request.number }}" >> $GITHUB_OUTPUT
+            echo "title=${{ github.event.pull_request.title }}" >> $GITHUB_OUTPUT
+          else
+            echo "type=manual" >> $GITHUB_OUTPUT
+            echo "action=sync" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Sync to Cloudflare KV
+        if: env.CLOUDFLARE_API_URL != ''
+        run: |
+          echo "Syncing ${{ steps.event.outputs.type }} to Cloudflare..."
+
+          EVENT_DATA=$(cat <<EOF
+          {
+            "type": "${{ steps.event.outputs.type }}",
+            "action": "${{ steps.event.outputs.action }}",
+            "id": "${{ steps.event.outputs.id }}",
+            "title": "${{ steps.event.outputs.title }}",
+            "repository": "${{ github.repository }}",
+            "timestamp": "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          }
+          EOF
+          )
+
+          echo "Event data: $EVENT_DATA"
+
+          # Send to Cloudflare Worker (if configured)
+          if [ -n "$CLOUDFLARE_API_URL" ]; then
+            curl -X POST "$CLOUDFLARE_API_URL/webhooks/github" \
+              -H "Content-Type: application/json" \
+              -d "$EVENT_DATA" || echo "Cloudflare sync skipped (not configured)"
+          fi
+
+      - name: Update local state
+        run: |
+          echo "Updating local kanban state..."
+
+          # Update kanban state file
+          if [ -f "kanban/state/current.json" ]; then
+            python3 << 'EOF'
+          import json
+          from datetime import datetime
+
+          with open('kanban/state/current.json', 'r') as f:
+              state = json.load(f)
+
+          state['lastUpdated'] = datetime.utcnow().isoformat() + 'Z'
+
+          # Update metrics based on event
+          event_type = "${{ steps.event.outputs.type }}"
+          action = "${{ steps.event.outputs.action }}"
+
+          if event_type == 'pull_request':
+              if action == 'opened':
+                  state['metrics']['prsOpened'] = state['metrics'].get('prsOpened', 0) + 1
+              elif action == 'closed':
+                  # Check if merged (simplified)
+                  state['metrics']['prsMerged'] = state['metrics'].get('prsMerged', 0) + 1
+
+          with open('kanban/state/current.json', 'w') as f:
+              json.dump(state, f, indent=2)
+
+          print("State updated successfully")
+          EOF
+          fi
+
+  # Update GitHub Projects
+  update-projects:
+    name: Update GitHub Projects
+    runs-on: ubuntu-latest
+    if: github.event_name == 'issues' || github.event_name == 'pull_request'
+    steps:
+      - name: Update project board
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const eventName = context.eventName;
+            const action = context.payload.action;
+
+            console.log(`Processing ${eventName} - ${action}`);
+
+            // Log the event for debugging
+            console.log('Event payload:', JSON.stringify(context.payload, null, 2));
+
+            // Project board automation would go here
+            // This requires GitHub Projects (Beta) API access
+
+  # Notify on failures
+  notify-failure:
+    name: Notify on Failure
+    runs-on: ubuntu-latest
+    needs: [sync-to-cloudflare]
+    if: failure()
+    steps:
+      - name: Create failure notification
+        run: |
+          echo "Kanban sync failed!"
+          echo "Event: ${{ github.event_name }}"
+          echo "Repository: ${{ github.repository }}"
+          echo "Workflow: ${{ github.workflow }}"
+
+          # Would send notification to Slack, Discord, etc.

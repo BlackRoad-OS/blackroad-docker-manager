@@ -1,0 +1,181 @@
+# GitHub Projects Configuration
+# This file defines the kanban board structure for GitHub Projects (Beta)
+
+name: BlackRoad Docker Manager
+description: Salesforce-style project management for Docker operations
+
+# Board columns with automation
+columns:
+  - name: Backlog
+    description: All incoming tasks and feature requests
+    automation:
+      - type: issue_added
+        action: add_to_column
+      - type: reopened
+        action: move_to_column
+
+  - name: Triage
+    description: Tasks being evaluated for priority and scope
+    automation:
+      - type: labeled
+        labels: [needs-triage]
+        action: move_to_column
+
+  - name: Ready
+    description: Prioritized tasks with clear requirements
+    automation:
+      - type: labeled
+        labels: [ready, priority-high, priority-medium]
+        action: move_to_column
+
+  - name: In Progress
+    description: Tasks currently being worked on
+    automation:
+      - type: branch_created
+        action: move_to_column
+      - type: labeled
+        labels: [in-progress]
+        action: move_to_column
+    limits:
+      max_per_assignee: 3
+
+  - name: Review
+    description: Pull requests awaiting review
+    automation:
+      - type: pr_opened
+        action: move_to_column
+      - type: review_requested
+        action: move_to_column
+
+  - name: Testing
+    description: Changes being validated
+    automation:
+      - type: labeled
+        labels: [testing, qa]
+        action: move_to_column
+      - type: ci_started
+        action: move_to_column
+
+  - name: Blocked
+    description: Tasks waiting on external dependencies
+    automation:
+      - type: labeled
+        labels: [blocked, waiting]
+        action: move_to_column
+    alerts:
+      - type: slack
+        after: 24h
+      - type: email
+        after: 48h
+
+  - name: Done
+    description: Completed and merged tasks
+    automation:
+      - type: pr_merged
+        action: move_to_column
+      - type: issue_closed
+        action: move_to_column
+      - type: labeled
+        labels: [done, completed]
+        action: move_to_column
+
+# Custom fields for Salesforce-style tracking
+fields:
+  - name: Priority
+    type: single_select
+    options:
+      - name: Critical
+        color: red
+      - name: High
+        color: orange
+      - name: Medium
+        color: yellow
+      - name: Low
+        color: green
+
+  - name: Effort
+    type: single_select
+    options:
+      - name: XS
+        description: < 1 hour
+      - name: S
+        description: 1-4 hours
+      - name: M
+        description: 1-2 days
+      - name: L
+        description: 3-5 days
+      - name: XL
+        description: 1+ week
+
+  - name: Customer Impact
+    type: single_select
+    options:
+      - name: Critical
+      - name: High
+      - name: Medium
+      - name: Low
+      - name: None
+
+  - name: Integration
+    type: multi_select
+    options:
+      - Cloudflare
+      - Salesforce
+      - Vercel
+      - DigitalOcean
+      - Claude
+      - RaspberryPi
+      - Mobile
+
+  - name: Hash Verified
+    type: checkbox
+    default: false
+
+  - name: CRM Link
+    type: text
+    description: Salesforce opportunity or case ID
+
+  - name: Agent ID
+    type: text
+    description: AI agent identifier for tracking
+
+# Views
+views:
+  - name: Kanban Board
+    type: board
+    group_by: status
+    sort_by: priority
+
+  - name: Sprint View
+    type: table
+    columns: [title, status, priority, effort, assignee]
+    sort_by: priority
+
+  - name: Integration Status
+    type: board
+    group_by: integration
+    filter: status != done
+
+  - name: Agent Tasks
+    type: table
+    columns: [title, agent_id, status, hash_verified]
+    filter: agent_id != null
+
+# Workflow rules
+workflows:
+  - name: Auto-assign reviewer
+    trigger: pr_opened
+    action: request_review
+    reviewers: [CODEOWNERS]
+
+  - name: Hash verification required
+    trigger: pr_opened
+    action: add_label
+    label: needs-hash-verification
+
+  - name: Stale task alert
+    trigger: in_column
+    column: In Progress
+    duration: 72h
+    action: add_label
+    label: stale
